@@ -14,7 +14,7 @@ const { Server } = require('socket.io');
 const crypto = require('crypto');
 const Engine = require('./engine');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const TICK_RATE = 30; // simulation steps per second
 const SNAPSHOT_RATE = 20; // network snapshots per second
@@ -197,9 +197,22 @@ function broadcastSnapshot(room) {
 // Express + Socket.io wiring
 // ---------------------------------------------------------------
 const app = express();
-app.use(express.static(path.join(__dirname, '..', 'client')));
+
+app.get("/", (req, res) => {
+  res.send("Block Survivor server is running");
+});
+
+app.use(express.static(path.join(__dirname, "..", "client")));
+
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
 
 io.on('connection', socket => {
   let username = null;
@@ -376,4 +389,7 @@ function pushFriendList(username) {
   emitTo(username, 'friend:list', { friends: u.friends.map(f => ({ username: f, online: online.has(f) })), incoming: u.incoming, outgoing: u.outgoing });
 }
 
-server.listen(PORT, () => console.log(`Block Survivor Online listening on :${PORT}`));
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Block Survivor Online listening on :${PORT}`);
+});
+
